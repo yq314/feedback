@@ -150,12 +150,12 @@
 				}
 				
 				if (settings.postURL) {
-					post.url = encodeURIComponent(document.URL);
+					post.url = document.URL;
 					$('#feedback-page-info').show();
 				}
 					
 				if (settings.postHTML) {
-					post.html = encodeURIComponent($('html').html());
+					post.html = $('html').html();
 					$('#feedback-page-structure').show();
 				}
 				
@@ -500,9 +500,10 @@
 
 						$.ajax({
 							url: settings.ajaxURL,
+							contentType: 'application/json',
 							dataType: 'json',
 							type: 'POST',
-							data: post,
+							data: JSON.stringify(post),
 							success: function() {
 								$('#feedback-module').append(settings.tpl.submitSuccess);
 							},
