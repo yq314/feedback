@@ -26,7 +26,6 @@
 			showDescriptionModal: true,
 			isDraggable: true,
 			onScreenshotTaken: function(){},
-			customTemplates: {},
 			tpl: {
 				description:	'<div id="feedback-welcome"><div class="feedback-logo">Feedback</div><p>Feedback lets you send us suggestions about our products. We welcome problem reports, feature ideas and general comments.</p><p>Start by writing a brief description:</p><textarea id="feedback-note-tmp"></textarea><p>Next we\'ll let you identify areas of the page related to your description.</p><button id="feedback-welcome-next" class="feedback-next-btn feedback-btn-gray">Next</button><div id="feedback-welcome-error">Please enter a description.</div><div class="feedback-wizard-close"></div></div>',
 				highlighter:	'<div id="feedback-highlighter"><div class="feedback-logo">Feedback</div><p>Click and drag on the page to help us better understand your feedback. You can move this dialog if it\'s in the way.</p><button class="feedback-sethighlight feedback-active"><div class="ico"></div><span>Highlight</span></button><label>Highlight areas relevant to your feedback.</label><button class="feedback-setblackout"><div class="ico"></div><span>Black out</span></button><label class="lower">Black out any personal information.</label><div class="feedback-buttons"><button id="feedback-highlighter-next" class="feedback-next-btn feedback-btn-gray">Next</button><button id="feedback-highlighter-back" class="feedback-back-btn feedback-btn-gray">Back</button></div><div class="feedback-wizard-close"></div></div>',
@@ -39,9 +38,9 @@
 			highlightElement:	true,
 			initialBox:			false
     }, options);
-		$.extend(settings.tpl, settings.customTemplates);
 		var supportedBrowser = !!window.HTMLCanvasElement;
 		var isFeedbackButtonNative = settings.feedbackButton == '.feedback-btn';
+		var _html2canvas = false;
 		if (supportedBrowser) {
 			if(isFeedbackButtonNative) {
 				$('body').append('<button class="feedback-btn feedback-btn-gray">' + settings.initButtonText + '</button>');
@@ -50,7 +49,11 @@
 				if(isFeedbackButtonNative) {
 					$(this).hide();
 				}
-				
+				if (!_html2canvas) {
+					$.getScript(settings.html2canvasURL, function() { 
+						_html2canvas = true;
+					});
+				}
 				var canDraw = false,
 					img = '',
 					h 	= $(document).height(),
@@ -457,7 +460,8 @@
 							_ctx.drawImage(canvas, 0, sy, w, dh, 0, 0, w, dh);
 							img = _canvas.get(0).toDataURL();
 							$(document).scrollTop(sy);
-							settings.onScreenshotTaken(img);
+							post.img = img;
+							settings.onScreenshotTaken(post.img);
 							if(settings.showDescriptionModal) {
 								$('#feedback-canvas-tmp').remove();
 								$('#feedback-overview').show();

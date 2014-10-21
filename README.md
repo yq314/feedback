@@ -158,9 +158,33 @@ I'm not exactly sure whether it's a good thing or not, but Google has it, so yea
 
 ### initialBox (Boolean)
 
-Setting this true the user will have to describe the bug/idea before being able to highlight the area.
+By Setting this true the user will have to describe the bug/idea before being able to highlight the area.
 
 `Default: false`
+
+### feedbackButton (String)
+
+Define a custom button instead of the default button that appears on the lower right corner.
+
+`Default: .feedback-btn`
+
+### showDescriptionModal (Boolean)
+
+Sets whether the next modal for entering description should appear or not
+
+`Default: true`
+
+### onScreenshotTaken (Function)
+
+A callback function to be called when clicking on take screenshot button. The callback function's prototype is `function(post)`
+
+`Default: {}`
+
+### isDraggable (Boolean)
+
+Sets whether the user will be able to drag the feedback options modal or not
+
+`Default: true`
 
 ## License
 
