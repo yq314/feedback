@@ -6,7 +6,7 @@
 
 	$.feedback = function(options) {
 	
-        var settings = $.extend({
+    var settings = $.extend({
 			ajaxURL: 			'',
 			postBrowserInfo: 	true,
 			postHTML:			true,
@@ -22,6 +22,11 @@
 			lineJoin:			'bevel',
 			lineWidth:			3,
 			html2canvasURL:		'html2canvas.js',
+			feedbackButton: '.feedback-btn',
+			showDescriptionModal: true,
+			isDraggable: true,
+			onScreenshotTaken: function(){},
+			customTemplates: {},
 			tpl: {
 				description:	'<div id="feedback-welcome"><div class="feedback-logo">Feedback</div><p>Feedback lets you send us suggestions about our products. We welcome problem reports, feature ideas and general comments.</p><p>Start by writing a brief description:</p><textarea id="feedback-note-tmp"></textarea><p>Next we\'ll let you identify areas of the page related to your description.</p><button id="feedback-welcome-next" class="feedback-next-btn feedback-btn-gray">Next</button><div id="feedback-welcome-error">Please enter a description.</div><div class="feedback-wizard-close"></div></div>',
 				highlighter:	'<div id="feedback-highlighter"><div class="feedback-logo">Feedback</div><p>Click and drag on the page to help us better understand your feedback. You can move this dialog if it\'s in the way.</p><button class="feedback-sethighlight feedback-active"><div class="ico"></div><span>Highlight</span></button><label>Highlight areas relevant to your feedback.</label><button class="feedback-setblackout"><div class="ico"></div><span>Black out</span></button><label class="lower">Black out any personal information.</label><div class="feedback-buttons"><button id="feedback-highlighter-next" class="feedback-next-btn feedback-btn-gray">Next</button><button id="feedback-highlighter-back" class="feedback-back-btn feedback-btn-gray">Back</button></div><div class="feedback-wizard-close"></div></div>',
@@ -33,21 +38,17 @@
 			screenshotStroke:	true,
 			highlightElement:	true,
 			initialBox:			false
-			
-        }, options);
-		
-		var _html2canvas = false;
+    }, options);
+		$.extend(settings.tpl, settings.customTemplates);
 		var supportedBrowser = !!window.HTMLCanvasElement;
-		
+		var isFeedbackButtonNative = settings.feedbackButton == '.feedback-btn';
 		if (supportedBrowser) {
-			$('body').append('<button class="feedback-btn feedback-btn-gray">' + settings.initButtonText + '</button>');
-			$(document).on('click', '.feedback-btn', function(){
-				$(this).hide();
-				
-				if (!_html2canvas) {
-					$.getScript(settings.html2canvasURL, function() { 
-						_html2canvas = true;
-					});
+			if(isFeedbackButtonNative) {
+				$('body').append('<button class="feedback-btn feedback-btn-gray">' + settings.initButtonText + '</button>');
+			}
+			$(document).on('click', settings.feedbackButton, function(){
+				if(isFeedbackButtonNative) {
+					$(this).hide();
 				}
 				
 				var canDraw = false,
@@ -86,41 +87,43 @@
 					$('#feedback-highlighter').show();
 				}
 				
-				$('#feedback-highlighter').on('mousedown', function(e) {
-					var $d = $(this).addClass('feedback-draggable'),
-						drag_h 	= $d.outerHeight(),
-						drag_w 	= $d.outerWidth(),
-						pos_y 	= $d.offset().top + drag_h - e.pageY,
-						pos_x 	= $d.offset().left + drag_w - e.pageX;
-					$d.css('z-index', 40000).parents().on('mousemove', function(e) {
-						_top 	= e.pageY + pos_y - drag_h;
-						_left 	= e.pageX + pos_x - drag_w;
-						_bottom = drag_h - e.pageY;
-						_right 	= drag_w - e.pageX;
-						
-						if (_left < 0) _left = 0;
-						if (_top < 0) _top = 0;
-						if (_right > $(window).width())
-							_left = $(window).width() - drag_w;
-						if (_left > $(window).width() - drag_w)
-							_left = $(window).width() - drag_w;
-						if (_bottom > $(document).height())
-							_top = $(document).height() - drag_h;
-						if (_top > $(document).height() - drag_h)
-							_top = $(document).height() - drag_h;
+				if(settings.isDraggable) {
+					$('#feedback-highlighter').on('mousedown', function(e) {
+						var $d = $(this).addClass('feedback-draggable'),
+							drag_h 	= $d.outerHeight(),
+							drag_w 	= $d.outerWidth(),
+							pos_y 	= $d.offset().top + drag_h - e.pageY,
+							pos_x 	= $d.offset().left + drag_w - e.pageX;
+						$d.css('z-index', 40000).parents().on('mousemove', function(e) {
+							_top 	= e.pageY + pos_y - drag_h;
+							_left 	= e.pageX + pos_x - drag_w;
+							_bottom = drag_h - e.pageY;
+							_right 	= drag_w - e.pageX;
+							
+							if (_left < 0) _left = 0;
+							if (_top < 0) _top = 0;
+							if (_right > $(window).width())
+								_left = $(window).width() - drag_w;
+							if (_left > $(window).width() - drag_w)
+								_left = $(window).width() - drag_w;
+							if (_bottom > $(document).height())
+								_top = $(document).height() - drag_h;
+							if (_top > $(document).height() - drag_h)
+								_top = $(document).height() - drag_h;
 
-						$('.feedback-draggable').offset({
-							top:	_top,
-							left:	_left
-						}).on("mouseup", function() {
-							$(this).removeClass('feedback-draggable');
+							$('.feedback-draggable').offset({
+								top:	_top,
+								left:	_left
+							}).on("mouseup", function() {
+								$(this).removeClass('feedback-draggable');
+							});
 						});
+						e.preventDefault();
+					}).on('mouseup', function(){
+						$(this).removeClass('feedback-draggable');
+						$(this).parents().off('mousemove mousedown');
 					});
-					e.preventDefault();
-				}).on('mouseup', function(){
-					$(this).removeClass('feedback-draggable');
-					$(this).parents().off('mousemove mousedown');
-				});
+				}
 
 				var ctx = $('#feedback-canvas')[0].getContext('2d');
 				
@@ -441,26 +444,33 @@
 						dh = $(window).height();
 					$('#feedback-helpers').hide();
 					$('#feedback-highlighter').hide();
-					if (!settings.screenshotStroke)
+					if (!settings.screenshotStroke) {
 						redraw(ctx, false);
-						
+					}
 					html2canvas($('body'), {
 						onrendered: function(canvas) {
-							if (!settings.screenshotStroke)
+							if (!settings.screenshotStroke) {
 								redraw(ctx);
-								
+							}
 							_canvas = $('<canvas id="feedback-canvas-tmp" width="'+ w +'" height="'+ dh +'"/>').hide().appendTo('body');
 							_ctx = _canvas.get(0).getContext('2d');
 							_ctx.drawImage(canvas, 0, sy, w, dh, 0, 0, w, dh);
 							img = _canvas.get(0).toDataURL();
 							$(document).scrollTop(sy);
-							
-							$('#feedback-canvas-tmp').remove();
-							$('#feedback-overview').show();
-							$('#feedback-overview-description-text>textarea').remove();
-							$('#feedback-overview-screenshot>img').remove();
-							$('<textarea id="feedback-overview-note">' + $('#feedback-note').val() + '</textarea>').insertAfter('#feedback-overview-description-text h3:eq(0)');
-							$('#feedback-overview-screenshot').append('<img class="feedback-screenshot" src="' + img + '" />');							
+							settings.onScreenshotTaken(img);
+							if(settings.showDescriptionModal) {
+								$('#feedback-canvas-tmp').remove();
+								$('#feedback-overview').show();
+								$('#feedback-overview-description-text>textarea').remove();
+								$('#feedback-overview-screenshot>img').remove();
+								$('<textarea id="feedback-overview-note">' + $('#feedback-note').val() + '</textarea>').insertAfter('#feedback-overview-description-text h3:eq(0)');
+								$('#feedback-overview-screenshot').append('<img class="feedback-screenshot" src="' + img + '" />');							
+							}
+							else {
+								$('#feedback-module').remove();
+								close();
+								_canvas.remove();
+							}
 						},
 						proxy: settings.proxy,
 						letterRendering: settings.letterRendering
