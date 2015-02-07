@@ -20,6 +20,7 @@ my $email_content = <<_EMAIL_;
 <html>
 <body>
     <p><b>URL</b>: <a href="$obj->{url}">$obj->{url}</a></p>
+    <p><b>Contact</b>: $obj->{contact}</p>
     <p>
         <b>Browser</b>:<br/> 
         <u>Platform</u>: $obj->{browser}->{platform}<br/>

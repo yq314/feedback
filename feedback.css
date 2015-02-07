@@ -15,7 +15,7 @@
   padding: 4px;
 }
 #feedback-note-tmp:focus,
-#feedback-overview-note:focus {  border: 1px solid #64b7cc }
+#feedback-overview-note:focus, #feedback-overview-contact:focus {  border: 1px solid #64b7cc }
 #feedback-canvas {
   position: absolute;
   top: 0;
@@ -300,12 +300,16 @@
 }
 .feedback-additional {  margin-bottom: 20px!important }
 #feedback-overview-description {  float: left }
-#feedback-overview-note {
+#feedback-overview-note, #feedback-overview-contact {
   width: 314px;
   padding: 4px;
   height: 90px;
   outline: none;
   font-family: Arial,sans-serif;
+  border: 1px solid #adadad;
+}
+#feedback-overview-contact {
+    height: 20px;
 }
 #feedback-overview-screenshot {  float: right }
 .feedback-screenshot {
